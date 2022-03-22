@@ -28,12 +28,26 @@ const sockets = [];
 wss.on("connection",(socket)=> { // 커넥션이 생겼을때 socket으로 즉시 메세지를 보낸다
 
     sockets.push(socket);
+    console.log("현재 연결된 소켓 수: " + sockets.length);
+    socket["nickname"] = "Anon";
 
     console.log("Connected to Browser ✅");
     socket.on("close",onSocketClose);
-    socket.on("message", (message) => {
+    socket.on("message", (msg) => {
         //socket.send(message.toString()); // 프론트에서 받은거 보내기
-        sockets.forEach(aSocket => aSocket.send(message.toString()));
+        
+        const message = JSON.parse(msg);
+        //console.log(parsed, message);
+
+        switch(message.type){
+            case "new_message":
+                sockets.forEach(aSocket => aSocket.send(`${socket.nickname}: ${message.payload.toString()}`));
+                break;
+            case "nickname":
+                socket["nickname"] = message.payload;
+                break;
+
+        }
 
     });
     
