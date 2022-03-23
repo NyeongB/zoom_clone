@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -16,15 +16,30 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server }); // 서버는 http, ws 2개의 protocol을 이해할 수있다.
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
+
+wsServer.on("connection", (socket)=>{
+    socket.onAny((event)=>{
+        console.log(`Socket Event: ${event}`);
+    });
+    
+    socket.on("enter_room", (roomName, done) =>{
+        
+        socket.join(roomName);
+        done();
+    }); 
+});
+
 
 function onSocketClose() {
     console.log("Discnnected from the Browser ❌");
 };
 
-const sockets = [];
 
+/*
+const wss = new WebSocket.Server({ server }); // 서버는 http, ws 2개의 protocol을 이해할 수있다.
+const sockets = [];
 wss.on("connection",(socket)=> { // 커넥션이 생겼을때 socket으로 즉시 메세지를 보낸다
 
     sockets.push(socket);
@@ -51,6 +66,6 @@ wss.on("connection",(socket)=> { // 커넥션이 생겼을때 socket으로 즉�
 
     });
     
-});
+}); */
 
-server.listen(3000, handleListen);
+httpServer.listen(3000, handleListen);
